@@ -59,6 +59,25 @@ error when we use an identifier before it's declared withing function scope
     // This way construction/destruction semantics of a type does not conflate with block encapsulation semantics.
 */
 
-
-
 ===============
+
+Having a way to annotate information on a declaration would be nice.
+
+C# does this by encapsulating markup information in brackets preceeding the declaration.
+
+Odin has a similar mechanism for "attributes"  that uses the syntax "@(<value>)" preceding the
+declaration, but this doesnt not seem to allow the user to annotate arbitrary information, distinct
+from what the compiler specifies. We could use this style syntax such that every declaration supports
+doing:
+
+_declarator_ @(user annotation information) <other supported tags> <name> ......
+
+In this way we are being explicit that this information is user supplied and is not a valid language tag.
+It also suggests a way to deliminate the annotation other than just plain white-space, which may be desirable
+by the user.
+
+Jai uses the @ character post-declaration where all text between the @ character and the next
+whitespace are part of the note. Since we already use @ for language features, it would be confusing to use this
+directly in the same way. However, since we do not have parametric polymorphism that uses the $ character, we could
+implement the same note system using $ instead.
+
