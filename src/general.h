@@ -241,6 +241,14 @@ inline bool operator!=(const String &s, const String &t) {
     return !(s == t);
 }
 
+inline bool starts_with(String s, String prefix) {
+    if (prefix.length > s.length) return false;
+
+    s.length = prefix.length;
+
+    return s == prefix;
+}
+
 // New code should use Compiler::copy_string as it allocates from the Compiler's memory pool,
 // use this only as necessary, or when the lifetime of the string is known and short.
 inline String copy_string(String s) {

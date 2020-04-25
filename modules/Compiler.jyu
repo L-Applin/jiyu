@@ -52,3 +52,7 @@ func compiler_run_metaprogram(compiler: *Compiler, argc: int32, argv: **uint8) -
 func @c_function compiler_add_library_search_path(compiler: *Compiler, path: string) -> void;
 func @c_function compiler_add_module_search_path(compiler: *Compiler, path: string) -> void;
 func @c_function compiler_add_compiled_object_for_linking(compiler: *Compiler, path: string) -> void;
+
+// _definition_ A string containing the format "<name>=<value>", or just "<name>" (a default value of _true_
+// will be assigned).
+func @c_function compiler_add_preload_definition(compiler: *Compiler, definition: string) -> bool;

@@ -48,6 +48,7 @@ int main(int argc, char **argv) {
     String target_triple;
     char *import_c_file = nullptr;
     bool emit_llvm_ir = false;
+    Array<String> preload_definitions;
 
     int metaprogram_arg_start = -1;
 
@@ -87,6 +88,11 @@ int main(int argc, char **argv) {
         } else if (to_string("--") == to_string(argv[i])) {
             metaprogram_arg_start = i+1;
             break;
+        } else if (starts_with(to_string(argv[i]), to_string("-D"))) {
+            String def = to_string(argv[i]);
+            advance(&def, 2);
+
+            preload_definitions.add(def);
         } else {
             filename = to_string(argv[i]);
         }
@@ -127,6 +133,11 @@ int main(int argc, char **argv) {
     };
 
     auto compiler = create_compiler_instance(&options);
+
+    for (auto def : preload_definitions) {
+        if (!compiler_add_preload_definition(compiler, def)) return -1;
+    }
+
 //     defer { destroy_compiler_instance(compiler); };
 
     compiler->is_metaprogram = is_metaprogram;

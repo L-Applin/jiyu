@@ -40,6 +40,12 @@ extern "C" {
     EXPORT void compiler_add_module_search_path(Compiler *compiler, String path);
     EXPORT void compiler_add_compiled_object_for_linking(Compiler *compiler, String path);
 
+    // @Temporary maybe, ideally definitions defined into the preload scope should be a
+    // user-level/driver-program thing.. but we're building into the C++-side API for now
+    // to get the ball rolling while we dont have AST building from the user code.
+    // _definition_ A string containing the format "<name>=<value>" or just "<name>"
+    EXPORT bool compiler_add_preload_definition(Compiler *compiler, String definition);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

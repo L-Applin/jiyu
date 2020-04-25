@@ -25,6 +25,9 @@
 #include "microsoft_craziness.h"
 #endif
 
+#include <new> // for placement new
+
+#define COMPILER_API_NEW(type) (new (compiler->get_memory(sizeof(type))) type())
 
 static String __default_module_search_path;  // @ThreadSafety
 static s64    __compiler_instance_count = 0; // @ThreadSafety
@@ -529,5 +532,45 @@ extern "C" {
 
     EXPORT void compiler_add_compiled_object_for_linking(Compiler *compiler, String path) {
         compiler->user_supplied_objs.add(copy_string(path));
+    }
+
+    EXPORT bool compiler_add_preload_definition(Compiler *compiler, String definition) {
+        Lexer *lexer = new Lexer(compiler, definition, to_string(""));
+        lexer->tokenize_text();
+
+        Parser *parser = new Parser(lexer);
+
+        defer {
+            delete lexer;
+            delete parser;
+        };
+
+        if (compiler->errors_reported) return false;
+
+
+        // Just contains and identifief and EOF.
+        if (lexer->tokens.count == 2) {
+            if (lexer->tokens[0].type != Token::IDENTIFIER) {
+                compiler->report_error(&lexer->tokens[0], "Definition must start with an identifier.\n");
+                return false;
+            }
+
+            Ast_Declaration *decl = COMPILER_API_NEW(Ast_Declaration);
+            decl->is_let = true;
+            decl->identifier = make_identifier(compiler, compiler->make_atom(lexer->tokens[0].string));
+            decl->initializer_expression = make_bool_literal(compiler, true);
+
+            parser->add_declaration(&compiler->preload_scope->declarations, decl);
+            return true;
+        }
+
+
+        parser->push_scopes(compiler->preload_scope);
+        auto decl = parser->parse_variable_declaration(false);
+        decl->is_let = true;
+
+        parser->add_declaration(&compiler->preload_scope->declarations, decl);
+
+        return true;
     }
 }
