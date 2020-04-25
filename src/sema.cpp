@@ -1552,6 +1552,83 @@ s64 pad_to_alignment(s64 current, s64 align) {
     return current;
 }
 
+void Sema::resolve_identifier(Ast_Identifier *ident, bool overload_set_allowed, bool do_errors_on_failure) {
+    assert(ident->name);
+
+    auto decl = find_declaration_for_atom(ident->name, ident->enclosing_scope);
+
+    if (!decl) {
+        String name = ident->name->name;
+        if (do_errors_on_failure) compiler->report_error(ident, "Undeclared identifier '%.*s'\n", PRINT_ARG(name));
+    } else {
+        if (overload_set_allowed) {
+            assert(ident->overload_set.count == 0);
+            collect_function_overloads_for_atom(ident->name, ident->enclosing_scope, &ident->overload_set);
+
+            // resolved_declaration and type_info will be resolved by the Ast_Function_Call code.
+            // Set to void for now, Ast_Function_Call code will either error or fix this up.
+            ident->type_info = compiler->type_void;
+        } else if (decl->type == AST_FUNCTION) {
+            assert(ident->overload_set.count == 0);
+            collect_function_overloads_for_atom(ident->name, ident->enclosing_scope, &ident->overload_set);
+
+            if (ident->overload_set.count > 1) {
+                String name = ident->name->name;
+                compiler->report_error(ident, "Ambiguous use of overloaded function '%.*s' (%d overloads).\n", name.length, name.data, ident->overload_set.count);
+
+
+                for (auto overload: ident->overload_set) {
+                    compiler->report_error(overload, "DEBUG: here\n");
+                }
+                return;
+            } else {
+                assert(ident->overload_set.count == 1);
+
+                typecheck_expression(decl);
+                ident->resolved_declaration = decl;
+                ident->type_info = get_type_info(decl);
+                return;
+            }
+
+            // resolved_declaration and type_info will be resolved by the Ast_Function_Call code.
+            // Set to void for now, Ast_Function_Call code will either error or fix this up.
+            ident->type_info = compiler->type_void;
+            return;
+        }
+
+        {
+            typecheck_expression(decl);
+            ident->resolved_declaration = decl;
+            ident->type_info = get_type_info(decl);
+
+            if (decl->type == AST_DECLARATION) {
+                auto declaration = static_cast<Ast_Declaration *>(decl);
+
+                if (declaration->is_struct_member && !declaration->is_let) {
+                    // @TODO We usually get here if someone tries to use a struct-member-variable
+                    // from within a function declared within the struct. Usually, these functions
+                    // will almost always be typechecked before we get here, but that may not always
+                    // be the case. We will want to set is_struct_member in the Ast_Declaration type-
+                    // checking code. -josh 28 Janurary 2020
+                    compiler->report_error(ident, "Attempt to use struct variable member without an instance!\n");
+                    return;
+                }
+
+                if (!declaration->is_let) {
+                    auto owner = get_nearest_owner(ident->enclosing_scope);
+                    auto decl_owner = get_nearest_owner(declaration->identifier->enclosing_scope);
+
+                    if (owner && owner->type == AST_FUNCTION && decl_owner && decl_owner->type == AST_FUNCTION && owner != decl_owner) {
+                        compiler->report_error(ident, "Attempt to use a variable from an outer stack frame.\n");
+                        compiler->report_error(declaration, "Variable declared here.\n");
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+
 void Sema::typecheck_expression(Ast_Expression *expression, Ast_Type_Info *want_numeric_type, bool overload_set_allowed, bool do_function_body, bool only_want_struct_type) {
     while (expression->substitution) expression = expression->substitution;
 
@@ -1615,82 +1692,7 @@ void Sema::typecheck_expression(Ast_Expression *expression, Ast_Type_Info *want_
 
         case AST_IDENTIFIER: {
             auto ident = static_cast<Ast_Identifier *>(expression);
-            assert(ident->name);
-
-            auto decl = find_declaration_for_atom(ident->name, ident->enclosing_scope);
-
-            if (!decl) {
-                String name = ident->name->name;
-                compiler->report_error(ident, "Undeclared identifier '%.*s'\n", PRINT_ARG(name));
-            } else {
-                if (overload_set_allowed) {
-                    assert(ident->overload_set.count == 0);
-                    collect_function_overloads_for_atom(ident->name, ident->enclosing_scope, &ident->overload_set);
-
-                    // resolved_declaration and type_info will be resolved by the Ast_Function_Call code.
-                    // Set to void for now, Ast_Function_Call code will either error or fix this up.
-                    ident->type_info = compiler->type_void;
-                } else if (decl->type == AST_FUNCTION) {
-                    assert(ident->overload_set.count == 0);
-                    collect_function_overloads_for_atom(ident->name, ident->enclosing_scope, &ident->overload_set);
-
-                    if (ident->overload_set.count > 1) {
-                        String name = ident->name->name;
-                        compiler->report_error(ident, "Ambiguous use of overloaded function '%.*s' (%d overloads).\n", name.length, name.data, ident->overload_set.count);
-
-
-                        for (auto overload: ident->overload_set) {
-                            compiler->report_error(overload, "DEBUG: here\n");
-                        }
-
-                        return;
-                    } else {
-                        assert(ident->overload_set.count == 1);
-
-                        typecheck_expression(decl);
-                        ident->resolved_declaration = decl;
-                        ident->type_info = get_type_info(decl);
-                        return;
-                    }
-
-                    // resolved_declaration and type_info will be resolved by the Ast_Function_Call code.
-                    // Set to void for now, Ast_Function_Call code will either error or fix this up.
-                    ident->type_info = compiler->type_void;
-                    return;
-                }
-
-                {
-                    typecheck_expression(decl);
-                    ident->resolved_declaration = decl;
-                    ident->type_info = get_type_info(decl);
-
-                    if (decl->type == AST_DECLARATION) {
-                        auto declaration = static_cast<Ast_Declaration *>(decl);
-
-                        if (declaration->is_struct_member && !declaration->is_let) {
-                            // @TODO We usually get here if someone tries to use a struct-member-variable
-                            // from within a function declared within the struct. Usually, these functions
-                            // will almost always be typechecked before we get here, but that may not always
-                            // be the case. We will want to set is_struct_member in the Ast_Declaration type-
-                            // checking code. -josh 28 Janurary 2020
-                            compiler->report_error(ident, "Attempt to use struct variable member without an instance!\n");
-                            return;
-                        }
-
-                        if (!declaration->is_let) {
-                            auto owner = get_nearest_owner(ident->enclosing_scope);
-                            auto decl_owner = get_nearest_owner(declaration->identifier->enclosing_scope);
-
-                            if (owner && owner->type == AST_FUNCTION && decl_owner && decl_owner->type == AST_FUNCTION && owner != decl_owner) {
-                                compiler->report_error(ident, "Attempt to use a variable from an outer stack frame.\n");
-                                compiler->report_error(declaration, "Variable declared here.\n");
-                                return;
-                            }
-                        }
-                    }
-                }
-            }
-
+            resolve_identifier(ident, overload_set_allowed);
             return;
         }
 
@@ -3337,6 +3339,19 @@ void Sema::typecheck_expression(Ast_Expression *expression, Ast_Type_Info *want_
             // @TODO add an error if the input to os() is not a valid, maybe.
             os->type_info = lit->type_info;
             os->substitution = lit;
+            return;
+        }
+
+        case AST_DEFINED: {
+            auto defined = static_cast<Ast_Defined *>(expression);
+
+            resolve_identifier(defined->identifier, true/*overload_set_allowed*/, false/*do_errors_on_failure*/);
+            if (compiler->errors_reported) return;
+
+            auto result = defined->identifier->resolved_declaration || defined->identifier->overload_set.count;
+            defined->substitution = make_bool_literal(compiler, result, defined);
+            defined->type_info = compiler->type_bool;
+
             return;
         }
 

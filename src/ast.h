@@ -50,6 +50,7 @@ enum Ast_Type {
     AST_TUPLE_EXPRESSION,
     AST_SWITCH,
     AST_CASE,
+    AST_DEFINED,
 };
 
 struct Ast {
@@ -414,6 +415,12 @@ struct Ast_Os : Ast_Expression {
     Ast_Os() { type = AST_OS; }
 
     Ast_Expression *expression = nullptr;
+};
+
+struct Ast_Defined : Ast_Expression {
+    Ast_Defined() { type = AST_DEFINED; }
+
+    Ast_Identifier *identifier = nullptr;
 };
 
 struct Ast_For : Ast_Expression {

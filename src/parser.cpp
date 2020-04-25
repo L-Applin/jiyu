@@ -282,6 +282,19 @@ Ast_Expression *Parser::parse_primary_expression() {
         return type_of;
     }
 
+    if (token->type == Token::KEYWORD_DEFINED) {
+        Ast_Defined *defined = PARSER_NEW(Ast_Defined);
+        next_token();
+        
+        if (!expect_and_eat(Token::LEFT_PAREN)) return defined;
+        
+        defined->identifier = parse_identifier();
+        
+        if (!expect_and_eat(Token::RIGHT_PAREN)) return defined;
+        
+        return defined;
+    }
+
     return nullptr;
 }
 

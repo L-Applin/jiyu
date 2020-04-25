@@ -340,6 +340,7 @@ Token Lexer::lex_token() {
         else if (result.string == to_string("typeof")) result.type = Token::KEYWORD_TYPEOF;
         else if (result.string == to_string("strideof")) result.type = Token::KEYWORD_STRIDEOF;
         else if (result.string == to_string("alignof"))  result.type = Token::KEYWORD_ALIGNOF;
+        else if (result.string == to_string("defined"))  result.type = Token::KEYWORD_DEFINED;
 
         // @Cleanup we should probably have a "tag" token
         else if (result.string == to_string("@c_function"))  result.type = Token::TAG_C_FUNCTION;

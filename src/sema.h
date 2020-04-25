@@ -15,6 +15,7 @@ struct Ast_Type_Instantiation;
 struct Ast_Function_Call;
 struct Ast_Literal;
 struct Ast_Struct;
+struct Ast_Identifier;
 
 struct Sema {
     Compiler *compiler;
@@ -46,6 +47,8 @@ struct Sema {
 
     void typecheck_function_header(Ast_Function *function, bool is_for_type_instantiation = false);
     void typecheck_function(Ast_Function *function);
+
+    void resolve_identifier(Ast_Identifier *ident, bool overload_set_allowed, bool do_errors_on_failure = true);
 };
 
 

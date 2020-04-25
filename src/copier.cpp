@@ -368,6 +368,13 @@ Ast_Expression *Copier::copy(Ast_Expression *expression) {
             COPY(expression);
             return _new;
         }
+        case AST_DEFINED: {
+            auto old  = static_cast<Ast_Defined *>(expression);
+            auto _new = COPIER_NEW(Ast_Defined);
+
+            COPY(identifier);
+            return _new;
+        }
         case AST_LIBRARY: {
             auto old  = static_cast<Ast_Library *>(expression);
             auto _new = COPIER_NEW(Ast_Library);

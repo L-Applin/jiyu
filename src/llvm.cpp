@@ -1832,9 +1832,10 @@ Value *LLVM_Generator::emit_expression(Ast_Expression *expression, bool is_lvalu
         case AST_LIBRARY:
             break;
         case AST_TYPE_INSTANTIATION:
-        case AST_OS:     // This is always subtituted by a literal at the AST level.
-        case AST_SIZEOF: // This is always subtituted by a literal at the AST level.
-        case AST_TYPEOF: // This is always subtituted by a literal at the AST level.
+        case AST_OS:      // This is always subtituted by a literal at the AST level.
+        case AST_SIZEOF:  // This is always subtituted by a literal at the AST level.
+        case AST_TYPEOF:  // This is always subtituted by a literal at the AST level.
+        case AST_DEFINED: // This is always subtituted by a literal at the AST level.
             assert(false);
             break;
     }

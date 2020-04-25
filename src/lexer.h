@@ -86,6 +86,7 @@ struct Token {
         KEYWORD_TYPEOF,
         KEYWORD_STRIDEOF,
         KEYWORD_ALIGNOF,
+        KEYWORD_DEFINED,
         
         TAG_C_FUNCTION,
         TAG_META,
