@@ -1237,7 +1237,10 @@ Ast_Function *Sema::get_polymorph_for_function_call(Ast_Function *template_funct
             typecheck_function(polymorph);
         }
     }
-    if (compiler->errors_reported) return nullptr;
+    if (compiler->errors_reported) {
+        compiler->report_error(call, "Polymorphed from here.\n");
+        return nullptr;
+    }
 
     if (polymorph) assert(!polymorph->is_template_function);
     return polymorph;
