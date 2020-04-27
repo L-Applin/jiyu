@@ -316,6 +316,8 @@ struct Ast_If : Ast_Expression {
 
     Ast_Scope then_scope;
     Ast_Scope *else_scope = nullptr;
+
+    bool is_when = false;
 };
 
 struct Ast_While : Ast_Expression {

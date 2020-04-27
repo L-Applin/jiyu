@@ -2640,13 +2640,34 @@ void Sema::typecheck_expression(Ast_Expression *expression, Ast_Type_Info *want_
 
             auto cond = _if->condition;
             if (get_final_type(get_type_info(cond))->type != Ast_Type_Info::BOOL) {
+                char *kind = "if";
+                if (_if->is_when) kind = "when";
+
                 String given = type_to_string(get_final_type(get_type_info(cond)));
-                compiler->report_error(cond, "'if' condition isn't of boolean type (Given %.*s).\n", PRINT_ARG(given));
+                compiler->report_error(cond, "'%s' condition isn't of boolean type (Given %.*s).\n", kind, PRINT_ARG(given));
                 free(given.data);
             }
 
-            typecheck_scope(&_if->then_scope);
-            if (_if->else_scope) typecheck_scope(_if->else_scope);
+            if (_if->is_when) {
+                auto lit = folds_to_literal(cond);
+                if (!lit) {
+                    compiler->report_error(cond, "'when' condition must fold to a literal expression.\n");
+                    return;
+                }
+
+                assert(lit->literal_type == Ast_Literal::BOOL);
+
+                if (lit->bool_value) {
+                    typecheck_scope(&_if->then_scope);
+                    _if->substitution = &_if->then_scope;
+                } else if (_if->else_scope) {
+                    typecheck_scope(_if->else_scope);
+                    _if->substitution = _if->else_scope;
+                }
+            } else {
+                typecheck_scope(&_if->then_scope);
+                if (_if->else_scope) typecheck_scope(_if->else_scope);
+            }
 
             return;
         }

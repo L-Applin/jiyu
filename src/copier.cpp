@@ -196,6 +196,7 @@ Ast_Expression *Copier::copy(Ast_Expression *expression) {
 
             copy_scope(&_new->then_scope, &old->then_scope);
             COPY(else_scope);
+            COPY_P(is_when);
 
             return _new;
         }

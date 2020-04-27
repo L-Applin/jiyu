@@ -1498,6 +1498,13 @@ Value *LLVM_Generator::emit_expression(Ast_Expression *expression, bool is_lvalu
         case AST_IF: {
             auto _if = static_cast<Ast_If *>(expression);
 
+            // when statements will always substitute to their
+            // target scope, otherwise if no scope passed the condition
+            // for when, we get here, so just early out!
+            if (_if->is_when) {
+                return nullptr;
+            }
+
             auto cond = emit_expression(_if->condition);
 
             auto current_block = irb->GetInsertBlock();

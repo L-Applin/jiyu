@@ -50,6 +50,7 @@ struct Token {
         KEYWORD_OPERATOR,
 
         KEYWORD_IF,
+        KEYWORD_WHEN,
         KEYWORD_ELSE,
 
         KEYWORD_WHILE,

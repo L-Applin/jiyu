@@ -990,8 +990,9 @@ Ast_Expression *Parser::parse_statement() {
         return let;
     }
 
-    if (token->type == Token::KEYWORD_IF) {
+    if (token->type == Token::KEYWORD_IF || token->type == Token::KEYWORD_WHEN) {
         Ast_If *_if = PARSER_NEW(Ast_If);
+        _if->is_when = (token->type == Token::KEYWORD_WHEN);
         next_token();
 
         _if->condition = parse_expression();
