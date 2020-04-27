@@ -1,0 +1,22 @@
+#import "LibC";
+
+func test_when<T>(value: T) {
+    when typeof(value) == int {
+        printf("value: %d\n", value);
+    } else when typeof(value) == string {
+        printf("value string: %.*s\n", value.length, value.data);
+    } else {
+        printf("other value type\n");
+    }
+}
+
+func main() {
+    test_when(10);
+    test_when("I need a hero!");
+    test_when(11.0);
+
+    when false {
+        printf("FAILED!!!!\n");
+    }
+}
+
