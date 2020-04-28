@@ -47,6 +47,7 @@ func __array_reset<T>(array: *[..] T) {
     array.data = null;
 }
 
+// Kind of redundant with __array_find
 func __array_contains<T>(array: *[..] T, item: T) -> bool {
     for <<array {
         if it == item return true;
@@ -54,9 +55,21 @@ func __array_contains<T>(array: *[..] T, item: T) -> bool {
     return false;
 }
 
-func __array_add_if_unique<T>(array: *[..] T, item: T) {
-    if array.contains(item) == false array.add(item);
-    // if !array.contains(item) array.add(item); // @@ This doesn't work!
+func __array_find<T>(array: *[..] T, item: T) -> array_count_type {
+    for <<array {
+        if it == item return it_index;
+    }
+    return -1;
+}
+
+func __array_add_if_unique<T>(array: *[..] T, item: T) -> array_count_type {
+    var index = array.find(item);
+    if index == -1 {
+        index = array.count;
+        array.add(item);
+    }
+
+    return index;
 }
 
 // Add some configuration flag for disabling these
